@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>path_smoothing_ros</name>
+  <version>0.0.0</version>
+  <description>The path_smoothing_ros package</description>
+
+  <maintainer email="gkourosg@yahoo.gr">George Kouros</maintainer>
+
+  <license>BSD</license>
+
+  <author email="gkourosg@yahoo.gr">George Kouros</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>geometry_msgs</depend>
+  <depend>roscpp</depend>
+
+  <export>
+  </export>
+</package>
