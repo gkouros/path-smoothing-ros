@@ -2,20 +2,27 @@ cmake_minimum_required(VERSION 2.8.3)
 project(path_smoothing_ros)
 
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
   roscpp
+  geometry_msgs
+  nav_msgs
 )
 
 catkin_package(
- INCLUDE_DIRS include
- LIBRARIES path_smoothing_ros
- CATKIN_DEPENDS geometry_msgs roscpp
+ INCLUDE_DIRS
+  include
+ CATKIN_DEPENDS
+  roscpp
+  geometry_msgs
+  nav_msgs
+ LIBRARIES
+  path_smoothing_ros
 )
 
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_library(path_smoothing_ros
-  src/${PROJECT_NAME}/path_smoothing_ros.cpp
-)
+
+add_library(cubic_spline_interpolator src/cubic_spline_interpolator.cpp)
+target_link_libraries(cubic_spline_interpolator ${catkin_LIBRARIES})
+
+add_executable(demo src/demo.cpp)
+target_link_libraries(demo cubic_spline_interpolator ${catkin_LIBRARIES})

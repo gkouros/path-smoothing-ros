@@ -1,0 +1,9 @@
+<launch>
+
+    <node
+      name="rviz"
+      pkg="rviz"
+      type="rviz"
+      args="-d $(find path_smoothing_ros)/config/config.rviz" />
+
+</launch>
