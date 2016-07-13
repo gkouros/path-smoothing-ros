@@ -49,7 +49,11 @@ namespace path_smoothing
   {
     public:
 
-      CubicSplineInterpolator(double numPoints, double skipClosePointDistance);
+      CubicSplineInterpolator(
+        double pointsPerUnit = 5.0,
+        unsigned int skipPoints = 0,
+        bool useEndConditions = true,
+        bool useMiddleConditions = false);
 
       ~CubicSplineInterpolator();
 
@@ -73,10 +77,6 @@ namespace path_smoothing
       double calcTotalDistance(const std::vector<geometry_msgs::PoseStamped>& path);
 
       double calcDistance(
-        const std::vector<geometry_msgs::PoseStamped>& path,
-        unsigned int idx);
-
-      double calcSlope(
         const std::vector<geometry_msgs::PoseStamped>& path,
         unsigned int idx);
 
@@ -118,29 +118,21 @@ namespace path_smoothing
         const std::vector<double>& cummulativeDistances,
         double pointCummDist);
 
-      double getNumPoints()
-      {
-        return numPoints_;
-      }
+      double getPointsPerUnit() {return pointsPerUnit_;}
+      unsigned int skipPoints() {return skipPoints_;}
+      bool getUseEndConditions() {return useEndConditions_;}
+      bool getUseMiddleConditions() {return useMiddleConditions_;}
 
-      double getSkipClosePointsDistance()
-      {
-        return skipClosePointDistance_;
-      }
-
-      void setNumPoints(double numPoints)
-      {
-        numPoints_ = numPoints;
-      }
-
-      void setSkipClosePointDistance(double skipClosePointDistance)
-      {
-        skipClosePointDistance_ = skipClosePointDistance;
-      }
+      void setPointsPerUnit(double ppu) {pointsPerUnit_ = ppu;}
+      void setSkipPoints(unsigned int sp) {skipPoints_ = sp;}
+      void setUseEndConditions(bool uec) {useEndConditions_ = uec;}
+      void setUseMiddleConditions(bool umc) {useMiddleConditions_ = umc;}
 
     private:
-      double numPoints_;
-      double skipClosePointDistance_;
+      double pointsPerUnit_;
+      unsigned int skipPoints_;
+      bool useEndConditions_;
+      bool useMiddleConditions_;
   };
 
 }  // namespace path_smoothing

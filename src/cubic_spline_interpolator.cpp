@@ -42,11 +42,15 @@ namespace path_smoothing
 {
 
   CubicSplineInterpolator::CubicSplineInterpolator(
-    double numPoints,
-    double skipClosePointDistance)
+    double pointsPerUnit,
+    unsigned int skipPoints,
+    bool useEndConditions,
+    bool useMiddleConditions)
     :
-      numPoints_(numPoints),
-      skipClosePointDistance_(skipClosePointDistance)
+      pointsPerUnit_(pointsPerUnit),
+      skipPoints_(skipPoints),
+      useEndConditions_(useEndConditions),
+      useMiddleConditions_(useMiddleConditions)
   {
   }
 
@@ -69,26 +73,27 @@ namespace path_smoothing
     const std::vector<geometry_msgs::PoseStamped>& path,
     std::vector<geometry_msgs::PoseStamped>& smoothedPath)
   {
-    // clear new smoothed path in case it's not empty
+    // clear new smoothed path vector in case it's not empty
     smoothedPath.clear();
 
     // create cummulative distances vector
     std::vector<double> cummulativeDistances;
     calcCummulativeDistances(path, cummulativeDistances);
 
-    // for (int i = 0; i < cummulativeDistances.size(); i++)
-    // {
-      // ROS_INFO_STREAM("CumDist[" << i << "]: " << cummulativeDistances[i]);
-    // }
-
     // create temp pose
     geometry_msgs::PoseStamped pose;
     pose.header = path[0].header;
 
-    for (unsigned int i = 0; i < numPoints_; i++)
+    unsigned int numPoints = pointsPerUnit_ * calcTotalDistance(path);
+
+    smoothedPath.resize(numPoints);
+
+    // interpolate points on the smoothed path using the points in the original path
+    for (unsigned int i = 0; i < numPoints; i++)
     {
-      interpolatePoint(path, cummulativeDistances, pose, static_cast<double>(i / (numPoints_-1)));
-      smoothedPath.push_back(pose);
+      double u = static_cast<double>(i) / (numPoints-1);
+      interpolatePoint(path, cummulativeDistances, pose, u);
+      smoothedPath[i] = pose;
     }
   }
 
@@ -101,16 +106,13 @@ namespace path_smoothing
   {
     unsigned int group = findGroup(cummulativeDistances, pointCummDist);
 
-    // ROS_INFO("u: %f - group: %d", pointCummDist, group);
-
     double a = calcAlphaCoeff(path, cummulativeDistances, group, pointCummDist);
     double b = calcBetaCoeff(path, cummulativeDistances, group, pointCummDist);
     double c = calcGammaCoeff(path, cummulativeDistances, group, pointCummDist);
     double d = calcDeltaCoeff(path, cummulativeDistances, group, pointCummDist);
 
     std::vector<double> grad, nextGrad;
-
-    calcPointGradient(path, cummulativeDistances, (group > 0) ? group : group+1, grad);
+    calcPointGradient(path, cummulativeDistances, group, grad);
     calcPointGradient(path, cummulativeDistances, group+1, nextGrad);
 
     point.pose.position.x =
@@ -169,21 +171,6 @@ namespace path_smoothing
         path[idx].pose.position.y - path[idx-1].pose.position.y);
 
     return dist;
-  }
-
-
-  double CubicSplineInterpolator::calcSlope(
-    const std::vector<geometry_msgs::PoseStamped>& path,
-    unsigned int idx)
-  {
-    if (idx < 0 || idx > path.size())
-      return 0;
-
-    double dx = path[idx].pose.position.x - path[idx-1].pose.position.x;
-    double dy = path[idx].pose.position.y - path[idx-1].pose.position.y;
-
-    return (dx != 0) ? dy / dx : 0.0;
-
   }
 
 
@@ -266,19 +253,31 @@ namespace path_smoothing
     unsigned int idx,
     std::vector<double>& gradient)
   {
-    if (!idx || idx >= path.size())
-    {
-      ROS_ERROR("Invalid Idx");
-      return;
-    }
-
-    double dx = path[idx].pose.position.x - path[idx-1].pose.position.x;
-    double dy = path[idx].pose.position.y - path[idx-1].pose.position.y;
-    double du = cummulativeDistances[idx] - cummulativeDistances[idx-1];
-
+    double dx, dy, du;
     gradient.resize(2);
-    gradient[0] = (du != 0) ? dx / du : 0;
-    gradient[1] = (du != 0) ? dy / du : 0;
+
+    // use either pose.yaw or interpolation to find gradient of points
+    if ((useEndConditions_ && (idx == 0 || idx == path.size() - 1))
+      || useMiddleConditions_)
+    {
+      double th = tf::getYaw(path[idx].pose.orientation);
+      int sign = (fabs(th) < M_PI / 2) ? 1 : -1;
+
+      gradient[0] = sign * calcTotalDistance(path)
+        * sqrt(1 + pow(tan(th),2)) / (1 + pow(tan(th), 2));
+      gradient[1] = tan(th) * gradient[0];
+    }
+    else  // gradient interpolation using original points
+    {
+      if (idx == 0 || idx == path.size()-1)
+        return;
+      dx = path[idx].pose.position.x - path[idx-1].pose.position.x;
+      dy = path[idx].pose.position.y - path[idx-1].pose.position.y;
+      du = cummulativeDistances[idx] - cummulativeDistances[idx-1];
+
+      gradient[0] =  dx / du;
+      gradient[1] =  dy / du;
+    }
   }
 
 

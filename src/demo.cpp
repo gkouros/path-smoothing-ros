@@ -49,8 +49,13 @@ int main(int argc, char** argv)
   ros::Publisher pathPub = nh.advertise<nav_msgs::Path>("initial_path", 1, true);
   ros::Publisher smoothedPathPub = nh.advertise<nav_msgs::Path>("smoothed_path", 1, true);
 
-  int numPoints;
-  nh.param<int>("num_points", numPoints, 10);
+  int pointsPerUnit, skipPoints;
+  bool useEndConditions, useMiddleConditions;
+
+  nh.param<int>("points_per_unit", pointsPerUnit, 5);
+  nh.param<int>("skip_points", skipPoints, 0);
+  nh.param<bool>("use_end_conditions", useEndConditions, false);
+  nh.param<bool>("use_middle_conditions", useMiddleConditions, false);
 
   XmlRpc::XmlRpcValue poseList;
   if (!nh.getParam("path_poses", poseList))
@@ -75,7 +80,8 @@ int main(int argc, char** argv)
   }
 
   // create a cubic spline interpolator
-  path_smoothing::CubicSplineInterpolator csi(numPoints, 0.0);
+  path_smoothing::CubicSplineInterpolator csi(
+    pointsPerUnit, skipPoints, useEndConditions, useMiddleConditions);
   csi.interpolatePath(path, smoothedPath);
 
   initialPosePub.publish(path.poses.front());
@@ -83,10 +89,11 @@ int main(int argc, char** argv)
   pathPub.publish(path);
   smoothedPathPub.publish(smoothedPath);
 
-  while (ros::ok())
+  ros::Time currTime = ros::Time::now();
+
+  while (ros::ok() && ros::Time::now().toSec() - currTime.toSec() < 2.0)
   {
     ros::spinOnce();
-    ros::Duration(1.0).sleep();
   }
 
   return 0;
