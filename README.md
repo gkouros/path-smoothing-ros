@@ -1,2 +1,2 @@
 # path-smoothing-ros
-A cubic spline interpolator for unsmooth paths (ROS).
+A cubic spline interpolator for unsmooth paths.
