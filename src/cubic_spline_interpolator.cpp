@@ -79,6 +79,8 @@ namespace path_smoothing
     // create cummulative distances vector
     std::vector<double> cummulativeDistances;
     calcCummulativeDistances(path, cummulativeDistances);
+    // for (int i = 0; i < cummulativeDistances.size(); i++)
+      // ROS_INFO("cd: %f", cummulativeDistances[i]);
 
     // create temp pose
     geometry_msgs::PoseStamped pose;
@@ -105,6 +107,7 @@ namespace path_smoothing
     double pointCummDist)
   {
     unsigned int group = findGroup(cummulativeDistances, pointCummDist);
+    ROS_INFO("u: %f, idx: %u", pointCummDist, group);
 
     double a = calcAlphaCoeff(path, cummulativeDistances, group, pointCummDist);
     double b = calcBetaCoeff(path, cummulativeDistances, group, pointCummDist);
@@ -116,14 +119,14 @@ namespace path_smoothing
     calcPointGradient(path, cummulativeDistances, group+1, nextGrad);
 
     point.pose.position.x =
-      + a * path[group].pose.position.x
-      + b * path[group+1].pose.position.x
+      + a * path[group*(skipPoints_+1)].pose.position.x
+      + b * path[(group+1)*(skipPoints_+1)].pose.position.x
       + c * grad[0]
       + d * nextGrad[0];
 
     point.pose.position.y =
-      + a * path[group].pose.position.y
-      + b * path[group+1].pose.position.y
+      + a * path[group*(skipPoints_+1)].pose.position.y
+      + b * path[(group+1)*(skipPoints_+1)].pose.position.y
       + c * grad[1]
       + d * nextGrad[1];
   }
@@ -133,14 +136,13 @@ namespace path_smoothing
     const std::vector<geometry_msgs::PoseStamped> path,
     std::vector<double>& cummulativeDistances)
   {
+    cummulativeDistances.clear();
     cummulativeDistances.push_back(0);
 
-    for (unsigned int i = 1; i < path.size(); i++)
-    {
+    for (unsigned int i = skipPoints_+1; i < path.size(); i += skipPoints_+1)
       cummulativeDistances.push_back(
         cummulativeDistances.back()
         + calcDistance(path, i) / calcTotalDistance(path));
-    }
   }
 
 
@@ -149,10 +151,8 @@ namespace path_smoothing
   {
     double totalDist = 0;
 
-    for (unsigned int i = 1; i < path.size(); i++)
-    {
+    for (unsigned int i = skipPoints_+1; i < path.size(); i += skipPoints_+1)
       totalDist += calcDistance(path, i);
-    }
 
     return totalDist;
   }
@@ -167,8 +167,8 @@ namespace path_smoothing
 
     double dist =
       hypot(
-        path[idx].pose.position.x - path[idx-1].pose.position.x,
-        path[idx].pose.position.y - path[idx-1].pose.position.y);
+        path[idx].pose.position.x - path[idx-skipPoints_-1].pose.position.x,
+        path[idx].pose.position.y - path[idx-skipPoints_-1].pose.position.y);
 
     return dist;
   }
@@ -254,13 +254,13 @@ namespace path_smoothing
     std::vector<double>& gradient)
   {
     double dx, dy, du;
-    gradient.resize(2);
+    gradient.assign(2, 0);
 
     // use either pose.yaw or interpolation to find gradient of points
-    if ((useEndConditions_ && (idx == 0 || idx == path.size() - 1))
+    if ((useEndConditions_ && (idx == 0 || idx == cummulativeDistances.size()-1))
       || useMiddleConditions_)
     {
-      double th = tf::getYaw(path[idx].pose.orientation);
+      double th = tf::getYaw(path[idx*(skipPoints_+1)].pose.orientation);
       int sign = (fabs(th) < M_PI / 2) ? 1 : -1;
 
       gradient[0] = sign * calcTotalDistance(path)
@@ -269,10 +269,11 @@ namespace path_smoothing
     }
     else  // gradient interpolation using original points
     {
-      if (idx == 0 || idx == path.size()-1)
+      if (idx == 0 || idx == cummulativeDistances.size()-1)
         return;
-      dx = path[idx].pose.position.x - path[idx-1].pose.position.x;
-      dy = path[idx].pose.position.y - path[idx-1].pose.position.y;
+
+      dx = path[(idx)*(skipPoints_+1)].pose.position.x - path[(idx-1)*(skipPoints_+1)].pose.position.x;
+      dy = path[(idx)*(skipPoints_+1)].pose.position.y - path[(idx-1)*(skipPoints_+1)].pose.position.y;
       du = cummulativeDistances[idx] - cummulativeDistances[idx-1];
 
       gradient[0] =  dx / du;
@@ -285,14 +286,13 @@ namespace path_smoothing
     const std::vector<double>& cummulativeDistances,
     double pointCummDist)
   {
-    for (unsigned int i = 0; i < cummulativeDistances.size() - 1; i++)
+    unsigned int i;
+    for (i = 0; i < cummulativeDistances.size()-1; i++)
     {
-      if (pointCummDist >= cummulativeDistances[i]
-        && pointCummDist <= cummulativeDistances[i+1])
-      {
+      if (pointCummDist <= cummulativeDistances[i+1])
         return i;
-      }
     }
+    return i;
   }
 
 }  // namespace path_smoothing

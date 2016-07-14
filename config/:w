@@ -1,8 +1,0 @@
-points_per_unit: 5
-use_end_conditions: True
-use_middle_conditions: True
-
-path_poses:
-  - { x:  4.0, y:  0.0, yaw: deg(135) }
-  - { x:  0.0, y: -1.0, yaw: deg(-140) }
-  - { x: -4.0, y:  0.0, yaw: deg(45.0) }

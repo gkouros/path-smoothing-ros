@@ -1,9 +1,17 @@
 points_per_unit: 5
-skip_points: 0
+skip_points: 1
 use_end_conditions: True
 use_middle_conditions: False
 
 path_poses:
   - { x:  4.0, y:  0.0, yaw: deg(135) }
+  - { x:  2.5, y: -2.0, yaw: deg(-180) }
+  - { x:  1.0, y: -2.0, yaw: deg(-180) }
   - { x:  0.0, y: -2.0, yaw: deg(-180) }
+  - { x: -1.0, y: -2.0, yaw: deg(-180) }
+  - { x: -2.5, y: -2.0, yaw: deg(-180) }
   - { x: -4.0, y:  0.0, yaw: deg(45.0) }
+
+  # - { x:  4.0, y:  0.0, yaw: deg(135) }
+  # - { x:  0.0, y: -1.0, yaw: deg(-180) }
+  # - { x: -4.0, y:  0.0, yaw: deg(45.0) }
