@@ -21,8 +21,8 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 
-add_library(cubic_spline_interpolator src/cubic_spline_interpolator.cpp)
-target_link_libraries(cubic_spline_interpolator ${catkin_LIBRARIES})
+add_library(${PROJECT_NAME} src/cubic_spline_interpolator.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_executable(demo src/demo.cpp)
-target_link_libraries(demo cubic_spline_interpolator ${catkin_LIBRARIES})
+target_link_libraries(demo ${PROJECT_NAME} ${catkin_LIBRARIES})
