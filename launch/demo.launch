@@ -11,7 +11,6 @@
     pkg="path_smoothing_ros"
     type="demo"
     output="screen">
-    <!-- launch-prefix="gdb"> -->
 
     <rosparam file="$(find path_smoothing_ros)/config/path.yaml" command="load" />
 

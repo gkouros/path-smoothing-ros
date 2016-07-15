@@ -64,8 +64,6 @@ int main(int argc, char** argv)
     exit(EXIT_FAILURE);
   }
 
-  ROS_INFO("Pose list size: %d", poseList.size());
-
   nav_msgs::Path path, smoothedPath;
   path.header.frame_id = "map";
   geometry_msgs::PoseStamped pose;
@@ -80,8 +78,8 @@ int main(int argc, char** argv)
   }
 
   // create a cubic spline interpolator
-  path_smoothing::CubicSplineInterpolator csi(
-    pointsPerUnit, skipPoints, useEndConditions, useMiddleConditions);
+  path_smoothing::CubicSplineInterpolator csi("lala");
+    // pointsPerUnit, skipPoints, useEndConditions, useMiddleConditions);
   csi.interpolatePath(path, smoothedPath);
 
   initialPosePub.publish(path.poses.front());

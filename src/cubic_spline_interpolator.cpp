@@ -54,7 +54,7 @@ namespace path_smoothing
   {
   }
 
-  CubicSplineInterpolator::CubicSplineInterpolator(std::string name = "")
+  CubicSplineInterpolator::CubicSplineInterpolator(std::string name)
   {
     ros::NodeHandle pnh("~/" + name);
 
@@ -92,8 +92,6 @@ namespace path_smoothing
     // create cummulative distances vector
     std::vector<double> cummulativeDistances;
     calcCummulativeDistances(path, cummulativeDistances);
-    // for (int i = 0; i < cummulativeDistances.size(); i++)
-      // ROS_INFO("cd: %f", cummulativeDistances[i]);
 
     // create temp pose
     geometry_msgs::PoseStamped pose;
@@ -120,7 +118,7 @@ namespace path_smoothing
     double pointCummDist)
   {
     unsigned int group = findGroup(cummulativeDistances, pointCummDist);
-    ROS_INFO("u: %f, idx: %u", pointCummDist, group);
+    // ROS_INFO("u: %f, idx: %u", pointCummDist, group);
 
     double a = calcAlphaCoeff(path, cummulativeDistances, group, pointCummDist);
     double b = calcBetaCoeff(path, cummulativeDistances, group, pointCummDist);
