@@ -106,6 +106,9 @@ namespace path_smoothing
     {
       double u = static_cast<double>(i) / (numPoints-1);
       interpolatePoint(path, cummulativeDistances, pose, u);
+
+      if (isnan(pose.pose.position.x) || isnan(pose.pose.position.y))
+        pose.pose = smoothedPath[std::max(static_cast<int>(i)-1, 0)].pose;
       smoothedPath[i] = pose;
     }
   }
