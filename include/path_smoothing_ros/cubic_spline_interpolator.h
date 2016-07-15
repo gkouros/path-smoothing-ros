@@ -55,6 +55,8 @@ namespace path_smoothing
         bool useEndConditions = true,
         bool useMiddleConditions = false);
 
+      CubicSplineInterpolator(std::string name);
+
       ~CubicSplineInterpolator();
 
       void interpolatePath(

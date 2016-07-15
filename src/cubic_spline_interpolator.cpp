@@ -54,6 +54,19 @@ namespace path_smoothing
   {
   }
 
+  CubicSplineInterpolator::CubicSplineInterpolator(std::string name = "")
+  {
+    ros::NodeHandle pnh("~/" + name);
+
+    pnh.param("points_per_unit", pointsPerUnit_, 5.0);
+    pnh.param<bool>("use_end_conditions", useEndConditions_, false);
+    pnh.param<bool>("use_middle_conditions", useMiddleConditions_, false);
+
+    int skipPoints;
+    pnh.param("skip_points", skipPoints, 0);
+    skipPoints_ = abs(skipPoints);
+  }
+
 
   CubicSplineInterpolator::~CubicSplineInterpolator()
   {
