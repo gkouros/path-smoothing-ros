@@ -89,6 +89,10 @@ namespace path_smoothing
     // clear new smoothed path vector in case it's not empty
     smoothedPath.clear();
 
+    // set skipPoints_ to 0 if the path contains has too few points
+    unsigned int oldSkipPoints = skipPoints_;
+    skipPoints_ = (path.size() - skipPoints_ >= 2) ? skipPoints_ : 0;
+
     // create cummulative distances vector
     std::vector<double> cummulativeDistances;
     calcCummulativeDistances(path, cummulativeDistances);
@@ -111,6 +115,9 @@ namespace path_smoothing
         pose.pose = smoothedPath[std::max(static_cast<int>(i)-1, 0)].pose;
       smoothedPath[i] = pose;
     }
+
+    // revert skipPoints to original value
+    skipPoints_ = oldSkipPoints;
   }
 
 
