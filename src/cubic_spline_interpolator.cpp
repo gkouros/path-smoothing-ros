@@ -91,7 +91,7 @@ namespace path_smoothing
 
     // set skipPoints_ to 0 if the path contains has too few points
     unsigned int oldSkipPoints = skipPoints_;
-    skipPoints_ = (path.size() - skipPoints_ >= 2) ? skipPoints_ : 0;
+    skipPoints_ = std::min<int>(path.size() - 2, skipPoints_);
 
     // create cummulative distances vector
     std::vector<double> cummulativeDistances;
@@ -117,17 +117,17 @@ namespace path_smoothing
     }
 
     // copy start and goal orientations to smoothed path
-    // smoothedPath.front().pose.orientation = path.front().pose.orientation;
-    // smoothedPath.back().pose.orientation = path.back().pose.orientation;
+    smoothedPath.front().pose.orientation = path.front().pose.orientation;
+    smoothedPath.back().pose.orientation = path.back().pose.orientation;
 
     // interpolate orientations of intermediate poses
-    // for (unsigned int i = 1; i < numPoints-1; i++)
-    // {
-      // double dx = smoothedPath[i+1].pose.position.x - smoothedPath[i].pose.position.x;
-      // double dy = smoothedPath[i+1].pose.position.y - smoothedPath[i].pose.position.y;
-      // double th = atan2(dy, dx);
-      // smoothedPath[i].pose.orientation = tf::createQuaternionMsgFromYaw(th);
-    // }
+    for (unsigned int i = 1; i < smoothedPath.size()-1; i++)
+    {
+      double dx = smoothedPath[i+1].pose.position.x - smoothedPath[i].pose.position.x;
+      double dy = smoothedPath[i+1].pose.position.y - smoothedPath[i].pose.position.y;
+      double th = atan2(dy, dx);
+      smoothedPath[i].pose.orientation = tf::createQuaternionMsgFromYaw(th);
+    }
 
     // revert skipPoints to original value
     skipPoints_ = oldSkipPoints;
@@ -163,11 +163,6 @@ namespace path_smoothing
       + b * path[(group+1)*(skipPoints_+1)].pose.position.y
       + c * grad[1]
       + d * nextGrad[1];
-
-    double yaw = atan2(grad[1], grad[0]);
-    if (isnan(yaw))
-      yaw = 0;
-    point.pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
   }
 
 
