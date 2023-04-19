@@ -25,4 +25,8 @@ add_library(${PROJECT_NAME} src/cubic_spline_interpolator.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_executable(demo src/demo.cpp)
+add_executable(path_smoother src/path_smoother.cpp)
+
 target_link_libraries(demo ${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(path_smoother ${PROJECT_NAME} ${catkin_LIBRARIES})
+
