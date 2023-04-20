@@ -39,11 +39,20 @@
 #include <tf/tf.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 
+
+ros::Publisher initialPosePub,finalPosePub,pathPub,smoothedPathPub;
+ros::Subscriber waypoint_sub;
+
+geometry_msgs::PoseStamped pose;
+nav_msgs::Path path, smoothedPath;
+
+double pointsPerUnit;
+int skipPoints;
+bool useEndConditions,useMiddleConditions; 
+
 void path_generator_callback(const geometry_msgs::PoseWithCovarianceStamped wp)
 {
-  nav_msgs::Path path, smoothedPath;
   path.header.frame_id = "map";
-  geometry_msgs::PoseStamped pose;
   pose.header.frame_id = "map";
 
   // pose.pose.position.x = wp.data.pose.pose.position.x;
@@ -51,20 +60,18 @@ void path_generator_callback(const geometry_msgs::PoseWithCovarianceStamped wp)
   pose.pose.position=wp.pose.pose.position;
   pose.pose.orientation = wp.pose.pose.orientation;
   path.poses.push_back(pose);
+  // create a cubic spline interpolator if path >1
+  if(path.poses.size() >1)
+  {
+    path_smoothing::CubicSplineInterpolator csi(pointsPerUnit, skipPoints, useEndConditions, useMiddleConditions);
 
-
-  // create a cubic spline interpolator
-  path_smoothing::CubicSplineInterpolator csi("lala");
-    // pointsPerUnit, skipPoints, useEndConditions, useMiddleConditions);
-  csi.interpolatePath(path, smoothedPath);
-
+      // pointsPerUnit, skipPoints, useEndConditions, useMiddleConditions);
+    csi.interpolatePath(path, smoothedPath);
+    finalPosePub.publish(path.poses.back());
+    pathPub.publish(path);
+    smoothedPathPub.publish(smoothedPath);
+  }
   initialPosePub.publish(path.poses.front());
-  finalPosePub.publish(path.poses.back());
-  pathPub.publish(path);
-  smoothedPathPub.publish(smoothedPath);
-
-  ros::Time currTime = ros::Time::now();
-
 }
 
 
@@ -72,60 +79,25 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "path_smoothing_ros_wrapper");
   ros::NodeHandle nh("~");
-  ROS_INFO_STREAM("Namespace:" << nh.getNamespace());
-
-  ros::Publisher initialPosePub = nh.advertise<geometry_msgs::PoseStamped>("initial_pose", 1, true);
-  ros::Publisher finalPosePub = nh.advertise<geometry_msgs::PoseStamped>("final_pose", 1, true);
-  ros::Publisher pathPub = nh.advertise<nav_msgs::Path>("initial_path", 1, true);
-  ros::Publisher smoothedPathPub = nh.advertise<nav_msgs::Path>("smoothed_path", 1, true);
-
-
-  waypoint_sub = n.subscribe("/waypoint", 10, path_generator_callback);
-
-  int pointsPerUnit, skipPoints;
-  bool useEndConditions, useMiddleConditions;
-
-  nh.param<int>("points_per_unit", pointsPerUnit, 5);
+  //ROS_INFO_STREAM("Namespace:" << nh.getNamespace());
+  nh.param<double>("points_per_unit", pointsPerUnit, 5.0);
   nh.param<int>("skip_points", skipPoints, 0);
   nh.param<bool>("use_end_conditions", useEndConditions, false);
   nh.param<bool>("use_middle_conditions", useMiddleConditions, false);
 
-  // XmlRpc::XmlRpcValue poseList;
-  // if (!nh.getParam("path_poses", poseList))
-  // {
-  //   ROS_FATAL("Failed to load path point list");
-  //   exit(EXIT_FAILURE);
-  // }
 
-  // nav_msgs::Path path, smoothedPath;
-  // path.header.frame_id = "map";
-  // geometry_msgs::PoseStamped pose;
-  // pose.header.frame_id = "map";
+  initialPosePub = nh.advertise<geometry_msgs::PoseStamped>("initial_pose", 1, true);
+  finalPosePub = nh.advertise<geometry_msgs::PoseStamped>("final_pose", 1, true);
+  pathPub = nh.advertise<nav_msgs::Path>("initial_path", 1, true);
+  smoothedPathPub = nh.advertise<nav_msgs::Path>("smoothed_path", 1, true);
 
-  // for (int i = 0; i < poseList.size(); i++)
-  // {
-  //   pose.pose.position.x = static_cast<double>(poseList[i]["x"]);
-  //   pose.pose.position.y = static_cast<double>(poseList[i]["y"]);
-  //   pose.pose.orientation = tf::createQuaternionMsgFromYaw(poseList[i]["yaw"]);
-  //   path.poses.push_back(pose);
-  // }
 
-  // // create a cubic spline interpolator
-  // path_smoothing::CubicSplineInterpolator csi("lala");
-  //   // pointsPerUnit, skipPoints, useEndConditions, useMiddleConditions);
-  // csi.interpolatePath(path, smoothedPath);
+  waypoint_sub = nh.subscribe("/waypoint", 10, path_generator_callback);
 
-  // initialPosePub.publish(path.poses.front());
-  // finalPosePub.publish(path.poses.back());
-  // pathPub.publish(path);
-  // smoothedPathPub.publish(smoothedPath);
+  // int pointsPerUnit, skipPoints;
+  // bool useEndConditions, useMiddleConditions;
 
-  // ros::Time currTime = ros::Time::now();
 
-  while (ros::ok() && ros::Time::now().toSec() - currTime.toSec() < 2.0)
-  {
-    ros::spinOnce();
-  }
-
+  ros::spin();
   return 0;
 }
