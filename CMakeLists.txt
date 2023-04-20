@@ -26,7 +26,9 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_executable(demo src/demo.cpp)
 add_executable(path_smoother src/path_smoother.cpp)
+add_executable(demo_generator src/demo_generator.cpp)
 
 target_link_libraries(demo ${PROJECT_NAME} ${catkin_LIBRARIES})
 target_link_libraries(path_smoother ${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(demo_generator ${PROJECT_NAME} ${catkin_LIBRARIES})
 

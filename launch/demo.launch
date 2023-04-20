@@ -13,7 +13,8 @@
     <param name="use_middle_conditions" value="true"/>
    
     <!-- input -->
-    <remap from="/waypoint" to="/initialpose"/>
+    <!-- <remap from="/waypoint" to="/initialpose"/> -->
   </node>
+  <node name="demo_generator" pkg="path_smoothing_ros" type="demo_generator" output="screen"/>
 
 </launch>
